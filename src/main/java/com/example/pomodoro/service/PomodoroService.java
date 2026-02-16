@@ -1,6 +1,7 @@
 package com.example.pomodoro.service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -52,20 +53,22 @@ public class PomodoroService {
         Streak streak = streakRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Streak not found"));
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
         LocalDate lastDate = streak.getLastStudyDate();
 
         if (lastDate == null) {
             streak.setCurrentStreak(1);
+        } else if (lastDate.isEqual(today)) {
+            return; // already counted today
         } else if (lastDate.plusDays(1).isEqual(today)) {
             streak.setCurrentStreak(streak.getCurrentStreak() + 1);
-        } else if (!lastDate.isEqual(today)) {
+        } else {
             streak.setCurrentStreak(1); // streak broken
         }
 
         streak.setLastStudyDate(today);
 
-        if (streak.getMaxStreak() < streak.getCurrentStreak()) {
+        if (streak.getCurrentStreak() > streak.getMaxStreak()) {
             streak.setMaxStreak(streak.getCurrentStreak());
         }
 
